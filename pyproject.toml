@@ -6,6 +6,8 @@ requires-python = ">=3.13"
 dependencies = [
     "django>=5.2.7",
     "django-restframework>=0.0.1",
+    "djangorestframework>=3.16.1",
+    "djangorestframework-simplejwt[blacklist]>=5.5.1",
     "drf-spectacular>=0.28.0",
     "drf-yasg>=1.21.11",
     "gunicorn>=23.0.0",
