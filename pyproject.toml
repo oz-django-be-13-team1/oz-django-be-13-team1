@@ -5,6 +5,7 @@ description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
     "django>=5.2.7",
+    "django-filter>=25.2",
     "django-restframework>=0.0.1",
     "djangorestframework>=3.16.1",
     "djangorestframework-simplejwt[blacklist]>=5.5.1",
