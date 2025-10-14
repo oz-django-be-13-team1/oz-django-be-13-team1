@@ -7,6 +7,8 @@ class UserAdmin(BaseUserAdmin):
     model = User
     list_display = ("user_id","email","nickname","name","is_active","is_staff","is_admin","last_login")
     search_fields = ("email","nickname","name","phone_number")
+    list_filter = ("is_staff", "is_active")
+    readonly_fields = ("is_admin",)
     ordering = ("email",)
 
     fieldsets = (
