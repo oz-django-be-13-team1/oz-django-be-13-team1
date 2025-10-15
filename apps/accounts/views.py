@@ -96,7 +96,7 @@ class HeaderLogoutView(APIView):
     def post(self,request):
         refresh = request.data.get("refresh") or request.query_params.get("refresh")
         if not refresh:
-            return Response({"detail": "refresh 올바른 토믄을 부탁드립니다."}, status=400)
+            return Response({"detail": "refresh 올바른 토큰을 부탁드립니다."}, status=400)
         try:
             token = RefreshToken(refresh)
             try:
