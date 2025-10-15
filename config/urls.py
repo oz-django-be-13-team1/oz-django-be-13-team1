@@ -18,6 +18,11 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView,
+)
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -37,4 +42,12 @@ urlpatterns = [
 
     # Swagger UI
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+
+    #JWT
+    path("api/auth/jwt/login/", TokenObtainPairView.as_view(),name="jwt-login"),
+    path("api/auth/jwt/refresh/", TokenRefreshView.as_view(),name="jwt-refresh"),
+    path("api/auth/jwt/verify/", TokenVerifyView.as_view(),name="jwt-verify"),
+
+    #cookie
+    path("api/auth/", include("apps.accounts.urls")),
 ]
