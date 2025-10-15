@@ -15,8 +15,39 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include, re_path
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView,
+)
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title = "MY API",
+        default_version='v1',
+        description = "문서 설명 입니다.",
+        terms_of_service = "https://www.google.com/policies/terms/",
+        contact = openapi.Contact(email="example@gmail.com"),
+        license=openapi.License(name="BSD License"),
+    )
+)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/users/', include("apps.users.urls")),
+
+    # Swagger UI
+    re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+
+    #JWT
+    path("api/auth/jwt/login/", TokenObtainPairView.as_view(),name="jwt-login"),
+    path("api/auth/jwt/refresh/", TokenRefreshView.as_view(),name="jwt-refresh"),
+    path("api/auth/jwt/verify/", TokenVerifyView.as_view(),name="jwt-verify"),
+
+    #cookie
+    path("api/auth/", include("apps.accounts.urls")),
 ]
