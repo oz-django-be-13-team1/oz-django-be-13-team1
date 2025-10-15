@@ -59,7 +59,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     last_login = models.DateTimeField("마지막 로그인", blank=True,null=True,db_column='last_login')
 
-    is_staff = models.BooleanField("스태프 여부", default=timezone.now, db_column='is_staff')
+    is_staff = models.BooleanField("스태프 여부", default=False, db_column='is_staff')
     is_admin = models.BooleanField("관리자 플래그",default=False, db_column='is_admin')
     is_active = models.BooleanField("활성화 여부", default=True,db_column='is_active')
 
