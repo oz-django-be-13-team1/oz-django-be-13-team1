@@ -4,9 +4,19 @@ from .models import User
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True,min_length=15)
 
+class UserReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["user_id","email","nickname","name","phone_number","last_login"]
+        read_only_fields = ["user_id","email","last_login"]
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True,required=False,allow_blank=True)
+
     class Meta:
         model = User
         fields = ['email','password','nickname','name','phone_number']
+        read_only_fields = ['user_id','email','last_login']
 
     def validate_email(self,value):
         if User.objects.filter(email=value).exists():
@@ -19,3 +29,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+    def update(self,instance,validated_data):
+        password = validated_data.pop('password',None)
+        for attr, value in validated_data.items():
+            setattr(instance,attr,value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
