@@ -90,6 +90,24 @@ class CookieLogoutView(APIView):
         resp = Response({"message": "로그아웃 완료"}, status=status.HTTP_200_OK)
         return _clear_tokens(resp)
 
+class HeaderLogoutView(APIView):
+    permission_classes =  [permissions.AllowAny]
+
+    def post(self,request):
+        refresh = request.data.get("refresh") or request.query_params.get("refresh")
+        if not refresh:
+            return Response({"detail": "refresh 올바른 토믄을 부탁드립니다."}, status=400)
+        try:
+            token = RefreshToken(refresh)
+            try:
+                token.blacklist()
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+        return Response({"message": "로그아웃 왼료"},status=status.HTTP_200_OK)
+
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
