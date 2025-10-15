@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import (
+from apps.accounts.views import (
     CookieTokenObtainPairView,
     CookieTokenRefreshView,
     CookieLogoutView,
     HeaderLogoutView,
+    MeView
 )
 
 app_name = "accounts"
