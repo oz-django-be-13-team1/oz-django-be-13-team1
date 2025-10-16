@@ -1,20 +1,17 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator, MinValueValidator
+from django.conf import settings
+
 import uuid
 
-# choices는 constants.py로 분리
 from .constants import BANK_CODES, ACCOUNT_TYPE
 
 User = get_user_model()
 
 
-class Accounts(models.Model):
-    """
-    계좌 정보를 저장하는 모델
-    - User와 1:N 관계
-    - TransactionHistory와 1:N 관계 예정 (외래키 대상)
-    """
+class Account(models.Model):
+
     account_id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -69,3 +66,13 @@ class Accounts(models.Model):
     class Meta:
         db_table = 'accounts'
         verbose_name = '계좌'
+
+class Transaction(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    account = models.ForeignKey('Account', on_delete=models.CASCADE, related_name='transactions')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    transaction_type = models.CharField(max_length=10)  # 예: deposit, withdraw
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.amount} - {self.transaction_type}"
