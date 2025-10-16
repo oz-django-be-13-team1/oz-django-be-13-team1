@@ -1,13 +1,13 @@
 
 from django.db import models
 from django.utils import timezone
-from ..accounts.models import Accounts
+from ..accounts.models import Account
 
 class TransactionHistory(models.Model):
 
     # 계좌 정보
     account = models.ForeignKey(
-        Accounts,
+        Account,
         on_delete=models.CASCADE,
         related_name='transaction_history',
         verbose_name = "계좌 정보"
