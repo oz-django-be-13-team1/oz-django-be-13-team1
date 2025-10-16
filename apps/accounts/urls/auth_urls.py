@@ -31,9 +31,9 @@ urlpatterns = [
     path("cookie/refresh/", CookieTokenRefreshView.as_view(), name="cookie-refresh"),
     path("cookie/logout/",  CookieLogoutView.as_view(), name="cookie-logout"),
 
-    path("api/auth/jwt/login/", TokenObtainPairView.as_view(), name="jwt-login"),
-    path("api/auth/jwt/refresh/", TokenRefreshView.as_view(), name="jwt-refresh"),
-    path("api/auth/jwt/verify/", TokenVerifyView.as_view(), name="jwt-verify"),
+    path("jwt/login/", TokenObtainPairView.as_view(), name="jwt-login"),
+    path("jwt/refresh/", TokenRefreshView.as_view(), name="jwt-refresh"),
+    path("jwt/verify/", TokenVerifyView.as_view(), name="jwt-verify"),
     path("jwt/logout/", HeaderLogoutView.as_view(), name="jwt-logout"),
 
     # User info
