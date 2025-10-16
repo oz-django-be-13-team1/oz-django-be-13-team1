@@ -4,6 +4,10 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import viewsets
+from apps.accounts.models import Account, Transaction  # 모델 존재 시
+from apps.accounts.serializers import AccountSerializer, TransactionSerializer  # Serializer 존재 시
+
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -88,3 +92,11 @@ class JWTLogoutView(APIView):
 
     def get(self, request):
         return Response({"info": "POST로 로그아웃"}, status=200)
+
+class AccountViewSet(viewsets.ModelViewSet):
+        queryset = Account.objects.all()
+        serializer_class = AccountSerializer
+
+class TransactionViewSet(viewsets.ModelViewSet):
+        queryset = Transaction.objects.all()
+        serializer_class = TransactionSerializer
