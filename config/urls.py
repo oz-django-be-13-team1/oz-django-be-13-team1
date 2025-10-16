@@ -41,5 +41,5 @@ urlpatterns = [
         schema_view.with_ui("swagger", cache_timeout=0),
         name="schema-swagger-ui",
     ),
-    path("api/auth/", include("apps.accounts.urls.")),
+    path("api/auth/", include("apps.accounts.urls")),
 ]
