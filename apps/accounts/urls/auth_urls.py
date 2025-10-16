@@ -1,42 +1,27 @@
-# your_app/auth_urls.py
-
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-
-# 2. 중복되던 JWT View import를 하나로 정리
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-)
-
+from django.urls import path
 from apps.accounts.views import (
     CookieTokenObtainPairView,
     CookieTokenRefreshView,
-    CookieLogoutView,
-    HeaderLogoutView,
-    MeView,
-    AccountViewSet,
-    TransactionViewSet,
+    CookieTokenLogoutView,
+    JWTLoginView,
+    JWTRefreshView,
+    JWTVerifyView,
+    JWTLogoutView,
+    UserSignupView,
 )
 
-router = DefaultRouter()
-router.register(r'accounts', AccountViewSet, basename='account')
-router.register(r'transactions', TransactionViewSet, basename='transaction')
-
-app_name = "accounts"
-
 urlpatterns = [
-    path("cookie/login/",   CookieTokenObtainPairView.as_view(), name="cookie-login"),
-    path("cookie/refresh/", CookieTokenRefreshView.as_view(), name="cookie-refresh"),
-    path("cookie/logout/",  CookieLogoutView.as_view(), name="cookie-logout"),
+    # Cookie JWT
+    path('cookie/login/', CookieTokenObtainPairView.as_view(), name='auth_cookie_login_create'),
+    path('cookie/logout/', CookieTokenLogoutView.as_view(), name='auth_cookie_logout_create'),
+    path('cookie/refresh/', CookieTokenRefreshView.as_view(), name='auth_cookie_refresh_create'),
 
-    path("jwt/login/", TokenObtainPairView.as_view(), name="jwt-login"),
-    path("jwt/refresh/", TokenRefreshView.as_view(), name="jwt-refresh"),
-    path("jwt/verify/", TokenVerifyView.as_view(), name="jwt-verify"),
-    path("jwt/logout/", HeaderLogoutView.as_view(), name="jwt-logout"),
+    # 일반 JWT
+    path('jwt/login/', JWTLoginView.as_view(), name='auth_jwt_login_create'),
+    path('jwt/logout/', JWTLogoutView.as_view(), name='auth_jwt_logout_create'),
+    path('jwt/refresh/', JWTRefreshView.as_view(), name='auth_jwt_refresh_create'),
+    path('jwt/verify/', JWTVerifyView.as_view(), name='auth_jwt_verify_create'),
 
-    # User info
-    path("me/", MeView.as_view(), name="me"),
-    path('', include(router.urls)),
+    # 회원가입
+    path('../../users/signup/', UserSignupView.as_view(), name='users_signup_create'),
 ]
