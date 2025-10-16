@@ -5,7 +5,7 @@ class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = [
-            "id",
+            "account_id",
             "user",
             "account_number",
             "bank_code",
@@ -15,7 +15,7 @@ class AccountSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = [
-            "id",
+            "account_id",
             "account_number",
             "bank_code",
             "account_type",
