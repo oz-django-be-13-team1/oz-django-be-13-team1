@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from decimal import Decimal
 
-from apps.accounts.models import Accounts
+from apps.accounts.models import Account
 from apps.accounts.constants import BANK_CODES, ACCOUNT_TYPE
 
 User = get_user_model()
@@ -29,7 +29,7 @@ class AccountsModelTests(TestCase):
             'balance': Decimal('0.00'),
         }
         data.update(overrides)
-        return Accounts(**data)
+        return Account(**data)
 
     def test_account_number_unique(self):
         """계좌번호는 중복 생성 불가"""
