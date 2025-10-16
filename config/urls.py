@@ -32,10 +32,14 @@ schema_view = get_schema_view(
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/users/', include("apps.users.urls")),
-
+    path("admin/", admin.site.urls),
+    path("api/users/", include("apps.users.urls")),
+    path("api/transactions/", include("transaction_history.urls")),
     # Swagger UI
-    re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    re_path(
+        r"^swagger/$",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-swagger-ui",
+    ),
     path("api/auth/", include("apps.accounts.urls")),
 ]
