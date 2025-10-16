@@ -1,74 +1,93 @@
 from decimal import Decimal
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from unittest.mock import patch
+from rest_framework.test import APIClient
+from rest_framework import status
 
-# 🚨 실제 경로에 맞게 모델, 서비스, 예외를 임포트
-from apps.accounts.models import Accounts
-from apps.transaction_history.models import TransactionHistory
-# from apps.accounts.services import TransactionService, InsufficientBalanceError
-# from apps.transaction_history.constants import TRANSACTION_TYPE_DEPOSIT, TRANSACTION_TYPE_WITHDRAWAL
-
-# ----------------- 임시 정의 (실제 apps/accounts/services.py 파일로 대체) -----------------
-class InsufficientBalanceError(Exception): pass
-class TransactionService: # 테스트를 통과시키기 위한 더미 클래스
-    @staticmethod
-    def create_transaction(account, amount, transaction_type, **kwargs):
-        if transaction_type == "withdrawal" and amount.compare(account.balance) > 0:
-            raise InsufficientBalanceError("잔액이 부족합니다.")
-        # 실제 로직에서는 잔액을 업데이트하고 TransactionHistory를 생성
-        pass
-# -------------------------------------------------------------------------------------
+from apps.accounts.models import Account, Transaction
 
 User = get_user_model()
-# 임시 상수 정의 (Accounts 모델의 유효한 값과 일치해야 함)
-BANK_SHINHAN = '088'
-ACCOUNT_TYPE_CHECKING = 'CHECKING'
 
 
-class TransactionServiceTests(TestCase):
+class TransactionAPITests(TestCase):
     """
-    TransactionService의 잔액 업데이트 및 오류 처리 로직을 검증
+    TransactionViewSet의 입금/출금/잔액 부족/원자성 로직을
+    실제 API 호출 방식으로 검증
     """
+
     def setUp(self):
-        self.user = User.objects.create_user(email='service@test.com', password='password')
-
-        # 🚨 테스트 계좌 생성 (초기 잔액 1000.00)
-        self.account = Accounts.objects.create(
+        self.client = APIClient()
+        self.user = User.objects.create_user(email='api@test.com', password='password')
+        self.account = Account.objects.create(
             user=self.user,
             account_number="1234567890",
-            bank_code=BANK_SHINHAN,
-            account_type=ACCOUNT_TYPE_CHECKING,
-            balance=Decimal("1000.00"),
+            bank_code="004",
+            account_type="CHECKING",
+            balance=Decimal("1000.00")
         )
-        self.deposit_type = 'deposit'
-        self.withdrawal_type = 'withdrawal'
+        self.deposit_amount = Decimal("500.00")
+        self.withdrawal_amount = Decimal("200.00")
+        # 인증
+        self.client.force_authenticate(user=self.user)
 
-    def test_deposit_updates_balance_correctly(self):
-        """입금(DEPOSIT) 시 계좌 잔액이 정확히 증가하는지 테스트"""
+    # ------------------------- Helper -------------------------
+    def post_transaction(self, amount, transaction_type):
+        """TransactionViewSet에 거래 요청 보내기"""
+        return self.client.post(
+            "/api/auth/transactions/",  # config/urls.py 기준
+            {
+                "account": self.account.account_id,  # PK 반영
+                "amount": amount,
+                "transaction_type": transaction_type
+            },
+            format="json"
+        )
 
-        # 🚨 실제 서비스 로직 호출 및 검증 코드로 대체 필요
-        # TransactionService.create_transaction(self.account, Decimal("500.00"), self.deposit_type)
-        # self.account.refresh_from_db()
-        # self.assertEqual(self.account.balance, Decimal("1500.00"))
+    # ------------------------- 입금 테스트 -------------------------
+    def test_deposit_updates_balance_and_creates_transaction(self):
+        response = self.post_transaction(self.deposit_amount, "deposit")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        self.assertTrue(True) # 임시 통과
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, Decimal("1500.00"))
 
-    def test_withdrawal_updates_balance_correctly(self):
-        """출금(WITHDRAWAL) 시 계좌 잔액이 정확히 감소하는지 테스트"""
+        transaction = Transaction.objects.get(account=self.account)
+        self.assertEqual(transaction.amount, self.deposit_amount)
+        self.assertEqual(transaction.transaction_type, "deposit")
 
-        # 🚨 실제 서비스 로직 호출 및 검증 코드로 대체 필요
-        # TransactionService.create_transaction(self.account, Decimal("200.00"), self.withdrawal_type)
-        # self.account.refresh_from_db()
-        # self.assertEqual(self.account.balance, Decimal("800.00"))
+    # ------------------------- 출금 테스트 -------------------------
+    def test_withdrawal_updates_balance_and_creates_transaction(self):
+        response = self.post_transaction(self.withdrawal_amount, "withdrawal")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        self.assertTrue(True) # 임시 통과
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, Decimal("800.00"))
 
+        transaction = Transaction.objects.get(account=self.account)
+        self.assertEqual(transaction.amount, self.withdrawal_amount)
+        self.assertEqual(transaction.transaction_type, "withdrawal")
+
+    # ------------------------- 잔액 부족 테스트 -------------------------
     def test_withdrawal_fail_on_insufficient_balance(self):
-        """잔액 부족 시 InsufficientBalanceError 예외 발생 테스트"""
+        response = self.post_transaction(Decimal("1500.00"), "withdrawal")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        # 🚨 실제 서비스 로직 호출 및 예외 검증 코드로 대체 필요
-        # with self.assertRaises(InsufficientBalanceError):
-        #     TransactionService.create_transaction(self.account, Decimal("1500.00"), self.withdrawal_type)
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, Decimal("1000.00"))
+        self.assertEqual(Transaction.objects.count(), 0)
 
-        self.assertTrue(True) # 임시 통과
+    # ------------------------- 원자성 테스트 -------------------------
+    @patch("apps.accounts.views.TransactionSerializer.save")
+    def test_atomic_failure_rolls_back(self, mock_save):
+        # serializer.save()에서 강제로 예외 발생
+        mock_save.side_effect = Exception("강제 오류 발생")
+
+        response = self.post_transaction(self.deposit_amount, "deposit")
+        # DRF view 내부에서 예외 처리 시 500 응답 예상
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # DB 롤백 확인
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, Decimal("1000.00"))
+        self.assertEqual(Transaction.objects.count(), 0)
