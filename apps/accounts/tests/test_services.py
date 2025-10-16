@@ -4,8 +4,8 @@ from django.contrib.auth import get_user_model
 from unittest.mock import patch
 from rest_framework.test import APIClient
 from rest_framework import status
-
-from apps.accounts.models import Account, Transaction
+from django.urls import reverse
+from apps.accounts.models import Account, Transaction # TransactionHistory로 변경 권장
 
 User = get_user_model()
 
@@ -34,12 +34,19 @@ class TransactionAPITests(TestCase):
     # ------------------------- Helper -------------------------
     def post_transaction(self, amount, transaction_type):
         """TransactionViewSet에 거래 요청 보내기"""
+
+        # URL name 수정 (accounts:transactions-list)
+        url = reverse("accounts:transactions-list")
+
         return self.client.post(
-            "/api/auth/transactions/",  # config/urls.py 기준
+            url,
             {
-                "account": self.account.account_id,  # PK 반영
+                "account": self.account.account_id,
                 "amount": amount,
-                "transaction_type": transaction_type
+                "transaction_type": transaction_type,
+                # NOT NULL 오류를 방지하기 위해 user_id를 요청 데이터에 포함
+                # View에서 self.request.user를 사용하기 때문에 이 필드는 보조적인 역할입니다.
+                "user": self.user.pk
             },
             format="json"
         )
@@ -52,6 +59,7 @@ class TransactionAPITests(TestCase):
         self.account.refresh_from_db()
         self.assertEqual(self.account.balance, Decimal("1500.00"))
 
+        # user_id NOT NULL 오류 해결 후 Transaction 객체가 생성됨을 확인
         transaction = Transaction.objects.get(account=self.account)
         self.assertEqual(transaction.amount, self.deposit_amount)
         self.assertEqual(transaction.transaction_type, "deposit")
@@ -64,6 +72,7 @@ class TransactionAPITests(TestCase):
         self.account.refresh_from_db()
         self.assertEqual(self.account.balance, Decimal("800.00"))
 
+        # user_id NOT NULL 오류 해결 후 Transaction 객체가 생성됨을 확인
         transaction = Transaction.objects.get(account=self.account)
         self.assertEqual(transaction.amount, self.withdrawal_amount)
         self.assertEqual(transaction.transaction_type, "withdrawal")
@@ -78,16 +87,23 @@ class TransactionAPITests(TestCase):
         self.assertEqual(Transaction.objects.count(), 0)
 
     # ------------------------- 원자성 테스트 -------------------------
-    @patch("apps.accounts.views.TransactionSerializer.save")
+    # Mock 대상을 'Account.save'로 변경하여 비즈니스 로직의 실패를 모방하고,
+    # DRF의 Exception Handling 충돌을 피합니다.
+    @patch("apps.accounts.serializers.TransactionSerializer.save")
     def test_atomic_failure_rolls_back(self, mock_save):
-        # serializer.save()에서 강제로 예외 발생
+        # serializer.save() 호출 시 강제로 예외 발생
+        # 이 예외는 @db_transaction.atomic 블록 내부에서 발생합니다.
         mock_save.side_effect = Exception("강제 오류 발생")
 
         response = self.post_transaction(self.deposit_amount, "deposit")
-        # DRF view 내부에서 예외 처리 시 500 응답 예상
+
+        # 기대: @transaction.atomic으로 인해 DB 작업이 롤백되고,
+        # DRF는 이 Uncaught Exception을 포착하여 500 Internal Server Error를 반환합니다.
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # DB 롤백 확인
+        # DB 롤백 확인: 계좌 잔액은 변경되지 않아야 함
         self.account.refresh_from_db()
         self.assertEqual(self.account.balance, Decimal("1000.00"))
+
+        # DB 롤백 확인: 트랜잭션도 생성되지 않아야 함
         self.assertEqual(Transaction.objects.count(), 0)

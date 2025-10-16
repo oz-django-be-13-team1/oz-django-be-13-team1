@@ -83,6 +83,7 @@ class TransactionViewSet(mixins.ListModelMixin,
         account.save(update_fields=['balance'])
 
         serializer.save(
+            user=self.request.user,
             transaction_type=serializer.validated_data['transaction_type'],
             amount=amount,
             account=account
