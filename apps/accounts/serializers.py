@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from .models import Accounts
+from .models import Account, Transaction
 
-class AccountsSerializer(serializers.ModelSerializer):
+class AccountSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Accounts
+        model = Account
         fields = [
-            "account_id",
+            "id",
             "user",
             "account_number",
             "bank_code",
@@ -14,15 +14,29 @@ class AccountsSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-
-        # 잔액, 계좌번호 등 핵심 정보는 생성 후 수정 불가능
         read_only_fields = [
-            "account_id",
-            "user",
+            "id",
             "account_number",
             "bank_code",
             "account_type",
             "balance",  # 잔액은 거래를 통해서만 변경
             "created_at",
-            "updated_at"
+            "updated_at",
+        ]
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction  # Transaction 모델로 수정
+        fields = [
+            "id",
+            "account",
+            "user",
+            "transaction_type",
+            "amount",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "user",
+            "created_at",
         ]
