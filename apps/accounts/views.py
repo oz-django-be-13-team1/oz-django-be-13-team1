@@ -8,10 +8,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Account, Transaction
 from .serializers import AccountSerializer, TransactionSerializer
 from .permissions import IsOwner
+from .filters import TransactionFilter
 
 class AccountViewSet(mixins.ListModelMixin,
                      mixins.RetrieveModelMixin,
@@ -49,6 +51,10 @@ class TransactionViewSet(mixins.ListModelMixin,
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwner]
+
+    # 필터 적용
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TransactionFilter
 
     def get_queryset(self):
         return Transaction.objects.filter(account__user=self.request.user).select_related('account')
