@@ -81,9 +81,11 @@ class TransactionViewSet(mixins.ListModelMixin,
 
         account.balance = new_balance
         account.save(update_fields=['balance'])
-        serializer.save(transaction_type=serializer.validated_data['transaction_type'],
-                        amount=amount,
-                        account=account)
+        serializer.save(
+                user=self.request.user,
+                transaction_type=serializer.validated_data['transaction_type'],
+                amount=amount,
+                account=account)
 
 COOKIE_ACCESS_NAME = "access"
 COOKIE_REFRESH_NAME = "refresh"
