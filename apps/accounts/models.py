@@ -66,6 +66,10 @@ class Account(models.Model):
     class Meta:
         db_table = 'accounts'
         verbose_name = '계좌'
+        verbose_name_plural = '계좌'
+
+    def __str__(self):
+        return f"{self.user} - {self.account_number}"
 
 class Transaction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
