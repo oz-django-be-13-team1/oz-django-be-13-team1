@@ -1,4 +1,3 @@
-# prod(EC2) 환경 전용 설정
 from .base import *
 import os
 
@@ -15,27 +14,32 @@ CSRF_COOKIE_SECURE = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://13.209.97.126",
-    "https://13.209.97.126",
+    "http://52.79.169.55",
+    "https://52.79.169.55",
     # "https://api.yourdomain.com",
 ]
 
-# Database → 환경변수로 주입 (RDS/도커 모두 호환)
+# ✅ Database (환경변수 기반, PostgreSQL)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB"),
-        "USER": os.getenv("POSTGRES_USER"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("POSTGRES_HOST", "db"),
-        "PORT": os.getenv("POSTGRES_PORT", "5432"),
+        "NAME": os.getenv("DB_NAME", "ViralMarketing"),
+        "USER": os.getenv("DB_USER", "admin"),
+        "PASSWORD": os.getenv("DB_PASSWORD", "1234"),
+        "HOST": os.getenv("DB_HOST", "localhost"),   # 도커면 db, EC2면 localhost/RDS endpoint
+        "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
 
-# 운영 로깅
+# ✅ 운영 로그 (터미널 출력)
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "root": {"handlers": ["console"], "level": "INFO"},
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
 }
