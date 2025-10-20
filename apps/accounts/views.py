@@ -10,12 +10,15 @@ from apps.accounts.serializers import AccountSerializer, TransactionSerializer  
 
 from django.contrib.auth import get_user_model
 
+from apps.users.serializers import RegisterSerializer
+
 User = get_user_model()
 
 # 회원가입 + 조회 (GET/POST)
 
 class UserSignupView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = RegisterSerializer
 
     def post(self, request):
         username = request.data.get("username")
