@@ -4,13 +4,13 @@ import os
 DEBUG = False
 
 # EC2 퍼블릭 IP 또는 도메인
-ALLOWED_HOSTS = ["13.209.97.126", "api.yourdomain.com"]
+ALLOWED_HOSTS = ["52.79.169.55", "api.yourdomain.com"]
 
 # HTTPS 적용 전 임시값 (인증서/도메인 연결 후 True/HSTS 활성화)
 SECURE_SSL_REDIRECT = False
 SECURE_HSTS_SECONDS = 0
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CSRF_TRUSTED_ORIGINS = [
@@ -18,6 +18,12 @@ CSRF_TRUSTED_ORIGINS = [
     "https://52.79.169.55",
     # "https://api.yourdomain.com",
 ]
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+INSTALLED_APPS += ["whitenoise"]
+MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ✅ Database (환경변수 기반, PostgreSQL)
 DATABASES = {

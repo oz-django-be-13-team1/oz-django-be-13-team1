@@ -21,7 +21,9 @@ urlpatterns = [
     path("api/users/", include("apps.users.urls")),
     path("api/transactions/", include("apps.transaction_history.urls")),
     path("api/auth/", include(("apps.accounts.urls", "accounts"), namespace="accounts")), # accounts/urls/__init__.py에서 auth_urls 포함
-    re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+
+    path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
+    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
     path('', lambda request: redirect('schema-swagger-ui')),
 
 
