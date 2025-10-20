@@ -16,7 +16,14 @@ class TransactionHistoryListView(generics.ListAPIView,):
     ordering_fields = ['transaction_at', 'amount']
 
     def get_queryset(self):
-        return TransactionHistory.objects.filter(account__user=self.request.user)
+        if getattr(self, "swagger_fake_view", False):
+            return TransactionHistory.objects.none()
+
+        user = getattr(self.request, "user", None)
+        if not getattr(user, "is_authenticated", False):
+            return TransactionHistory.objects.none()
+
+        return TransactionHistory.objects.filter(account__user_id=user.id)
 
 
 # 로그인한 사용자의 거래 내역을 수정 및 삭제
@@ -25,7 +32,14 @@ class TransactionHistoryDetailView(generics.RetrieveUpdateDestroyAPIView) :
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        return TransactionHistory.objects.filter(account__user=self.request.user)
+        if getattr(self, "swagger_fake_view", False):
+            return TransactionHistory.objects.none()
+
+        user = getattr(self.request, "user", None)
+        if not getattr(user, "is_authenticated", False):
+            return TransactionHistory.objects.none()
+
+        return TransactionHistory.objects.filter(account__user_id=user.id)
 
     def perform_update(self, serializer):
         if self.get_object().account.user != self.request.user:
