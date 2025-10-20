@@ -1,4 +1,4 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -96,7 +96,41 @@ class JWTLogoutView(APIView):
 class AccountViewSet(viewsets.ModelViewSet):
         queryset = Account.objects.all()
         serializer_class = AccountSerializer
+        permission_classes = [permissions.IsAuthenticated]
+
+        # 본인 계좌만 조회되도록 필터 추가
+        def get_queryset(self):
+            user = self.request.user
+            if user.is_authenticated:
+                return Account.objects.filter(user=user)
+            return Account.objects.none()
+
+        # 계좌 생성 시 자동으로 user 지정
+        def perform_create(self, serializer):
+            serializer.save(user=self.request.user)
+
+        # 잔액이 남아있을 경우 삭제 불가 (테스트 204 != 400 해결)
+        def destroy(self, request, *args, **kwargs):
+            account = self.get_object()
+            if account.balance > 0:
+                return Response(
+                    {"error": "잔액이 남아있는 계좌는 삭제할 수 없습니다."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            return super().destroy(request, *args, **kwargs)
 
 class TransactionViewSet(viewsets.ModelViewSet):
         queryset = Transaction.objects.all()
         serializer_class = TransactionSerializer
+        permission_classes = [permissions.IsAuthenticated]
+
+        # 로그인한 유저의 거래만 조회
+        def get_queryset(self):
+            user = self.request.user
+            if user.is_authenticated:
+                return Transaction.objects.filter(user=user)
+            return Transaction.objects.none()
+
+        # 거래 생성 시 user 자동 지정 (IntegrityError 해결)
+        def perform_create(self, serializer):
+            serializer.save(user=self.request.user)
