@@ -15,3 +15,5 @@ DATABASES = {
             "PORT": os.getenv("POSTGRES_PORT", default="5432"),
         }
     }
+
+DEBUG = False
