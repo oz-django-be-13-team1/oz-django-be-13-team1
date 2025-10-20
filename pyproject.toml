@@ -9,6 +9,7 @@ dependencies = [
     "django-restframework>=0.0.1",
     "djangorestframework>=3.16.1",
     "djangorestframework-simplejwt[blacklist]>=5.5.1",
+    "dotenv>=0.9.9",
     "drf-spectacular>=0.28.0",
     "drf-yasg>=1.21.11",
     "gunicorn>=23.0.0",
