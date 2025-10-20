@@ -1,6 +1,6 @@
 from rest_framework import generics, filters
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from .models import TransactionHistory
 from .serializers import TransactionHistorySerializer
 from rest_framework.exceptions import PermissionDenied
@@ -9,7 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 # 로그인한 사용자의 모든 거래 내역을 조회
 class TransactionHistoryListView(generics.ListAPIView,):
     serializer_class = TransactionHistorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     filter_backends = (DjangoFilterBackend,filters.OrderingFilter,)
     filterset_fields = ['transaction_direction', 'transaction_type', 'amount'] # 조건 2개 이상 필터링
@@ -22,7 +22,7 @@ class TransactionHistoryListView(generics.ListAPIView,):
 # 로그인한 사용자의 거래 내역을 수정 및 삭제
 class TransactionHistoryDetailView(generics.RetrieveUpdateDestroyAPIView) :
     serializer_class = TransactionHistorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return TransactionHistory.objects.filter(account__user=self.request.user)
